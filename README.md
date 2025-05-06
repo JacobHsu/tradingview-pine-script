@@ -2,6 +2,48 @@
 
 
 MACD + KC trategy
+
+```js
+strategy("KC Reversal Strategy", overlay=true)
+
+// === MACD 設定 ===
+fastLength = input.int(12, "Fast length")
+slowLength = input.int(26, "Slow length")
+MACDLength = input.int(9, "MACD signal length")
+
+macd = ta.ema(close, fastLength) - ta.ema(close, slowLength)
+signal = ta.ema(macd, MACDLength)
+delta = macd - signal
+macdDeadCross = ta.crossunder(delta, 0)
+
+// === KC 設定 ===
+kcLength = input.int(20, "KC Length")
+kcMultiplier = input.float(1.5, "KC Multiplier")
+
+basis = ta.ema(close, kcLength)
+range_ = ta.atr(kcLength)
+upperKC = basis + kcMultiplier * range_
+lowerKC = basis - kcMultiplier * range_
+
+// === 進場條件 ===
+// 做多：突破 KC 下軌（從下方穿回來）
+longCondition = ta.crossover(close, lowerKC)
+
+// 做空條件：
+// 1. 價格突破上軌
+brokeUpperKC = close > upperKC
+// 2. 未突破但仍在區間上軌內，且 MACD 死叉
+inRangeAndDeadCross = close > basis and macdDeadCross
+
+shortCondition = brokeUpperKC or inRangeAndDeadCross
+
+// === 進場指令 ===
+if (longCondition)
+    strategy.entry("Long", strategy.long, comment="buy LE")
+if (shortCondition)
+    strategy.entry("Short", strategy.short, comment="sell SE")
+```
+
 ```js
 // This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © jacob_hsu
