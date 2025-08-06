@@ -1,5 +1,46 @@
 # tradingview-pine-script
 
+## indicator
+
+MA/SMA 糾結偵測
+```js
+indicator("MA/SMA 糾結偵測", overlay=true)
+
+// 均線計算
+ema5 = ta.ema(close, 5), ema10 = ta.ema(close, 10), ema20 = ta.ema(close, 20)
+sma5 = ta.sma(close, 5), sma10 = ta.sma(close, 10), sma20 = ta.sma(close, 20)
+
+// 均線繪圖
+plot(ema5, "EMA5", color=color.teal), plot(ema10, "EMA10", color=color.navy)
+plot(sma5, "SMA5", color=color.orange), plot(sma10, "SMA10", color=color.red)
+
+// 糾結條件
+tolerance = input.float(0.003, "糾結容忍距離（比例）", step=0.001) * close
+is_converging = math.abs(ema5 - ema10) < tolerance and math.abs(sma5 - sma10)  < tolerance
+is_bullish = ema5 > ema10 and ema10 > ema20 and sma5 > sma10 and sma10 > sma20
+
+// 框參數
+height_pct = input.float(0.01, "框高度 ±%", step=0.001), width_bars = input.int(3, "框寬（左右K棒數）", minval=1)
+
+// 中心點
+y_cross = (ema5 + ema10 + ema20 + sma5 + sma10 + sma20) / 6
+
+// 單行叉叉（不遮擋、不報錯）
+if is_converging
+    label.new(x=bar_index, y=y_cross, text="✖️", style=label.style_none, textcolor=color.black, size=size.normal, color=color.new(color.white, 100))
+
+// 單行框框
+var box b = na
+if is_converging
+    if not na(b)
+        box.delete(b)
+    b := box.new(left=bar_index - width_bars, right=bar_index + width_bars, top=y_cross * (1 + height_pct), bottom=y_cross * (1 - height_pct), border_color=is_bullish ? color.green : color.red, bgcolor=is_bullish ? color.new(color.green, 85) : color.new(color.red, 85))
+
+// 快訊條件
+alertcondition(is_converging, title="均線糾結快訊", message="📊 MA/SMA 糾結出現，可能即將變盤！")
+```
+
+## strategy
 
 MACD + KC trategy
 
