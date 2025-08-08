@@ -40,6 +40,58 @@ if is_converging
 alertcondition(is_converging, title="均線糾結快訊", message="📊 MA/SMA 糾結出現，可能即將變盤！")
 ```
 
+MACD 零軸下上 金叉/死叉
+```
+indicator("EMA(12) + MACD 零軸 金叉/死叉", overlay=true)
+
+// === Inputs ===
+emaLen   = input.int(12, "EMA 期間", minval=1)
+fastLen  = input.int(12, "MACD 快線 EMA", minval=1)
+slowLen  = input.int(26, "MACD 慢線 EMA", minval=1)
+sigLen   = input.int(9,  "MACD 訊號 EMA", minval=1)
+
+onlyBelowZero = input.bool(true,  "僅零軸下標註金叉")
+markDeath     = input.bool(true,  "僅零軸上標註死叉")
+
+// === EMA(12) ===
+ema12 = ta.ema(close, emaLen)
+plot(ema12, title="EMA(12)", color=color.new(color.yellow, 0), linewidth=2)
+
+// === MACD ===
+macd   = ta.ema(close, fastLen) - ta.ema(close, slowLen)
+signal = ta.ema(macd, sigLen)
+
+// 交叉
+golden = ta.crossover(macd, signal)
+death  = ta.crossunder(macd, signal)
+
+// 過濾
+belowZeroOKForGolden = onlyBelowZero ? (macd < 0 and signal < 0) : true
+aboveZeroOKForDeath  = (macd > 0 and signal > 0)  // 只在零軸上標註死叉
+
+// === 在 EMA 線上標註 ===
+// 金叉：⭐（貼在 ema12，僅零軸下）
+plotchar(golden and belowZeroOKForGolden ? ema12 : na,
+         title="金叉 ⭐ (貼 EMA)", char="⭐",
+         location=location.absolute, size=size.tiny, color=color.new(color.lime, 0))
+
+// 死叉：✖️（貼在 ema12，僅零軸上）
+plotchar(markDeath and death and aboveZeroOKForDeath ? ema12 : na,
+         title="死叉 ✖️ (貼 EMA)", char="✖️",
+         location=location.absolute, size=size.tiny, color=color.new(color.red, 0))
+
+// === 警報===
+alertcondition(golden and belowZeroOKForGolden,
+     title="MACD 金叉（僅零軸下）",
+     message="MACD 金叉")
+
+alertcondition(markDeath and death and aboveZeroOKForDeath,
+     title="MACD 死叉（僅零軸上）",
+     message="MACD 死叉")
+```
+
+
+
 ## strategy
 
 MACD + KC trategy
