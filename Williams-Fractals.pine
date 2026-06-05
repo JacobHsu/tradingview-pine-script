@@ -1,0 +1,22 @@
+//@version=4
+study("Williams Fractals with Alerts by MrTuanDoan", shorttitle="Fractals X", format=format.price, precision=0, overlay=true)
+// Default code from TradingView
+// Created for my friend's request D_67
+
+// Define "n" as the number of periods and keep a minimum value of 2 for error handling.
+n = input(title="Periods", defval=2, minval=2, type=input.integer)
+
+upFractal = (high[n+2]  < high[n]) and (high[n+1]  < high[n]) and (high[n-1] < high[n]) and (high[n-2] < high[n])
+dnFractal = (low[n+2]  > low[n]) and (low[n+1]  > low[n]) and (low[n-1] > low[n]) and (low[n-2] > low[n])
+
+filter = input (true, title="Filter fractals")
+show_previous_fractals = input(defval = 10, title="Show Previous Fractals", type=input.integer, minval = 10, maxval= 100)
+
+// Plot the fractals as shapes on the chart.
+plotshape(dnFractal, style=shape.triangledown, location=location.belowbar, offset=-2, color=color.maroon, transp=0, size = size.small, show_last = filter ? show_previous_fractals: 200)
+plotshape(upFractal, style=shape.triangleup,   location=location.abovebar, offset=-2, color=color.olive,  transp=0, size = size.small, show_last = filter ? show_previous_fractals: 200)
+
+// alert for the latest fractal
+alertcondition(dnFractal[0], title='Down Fractal Alert', message='Down Fractal Appears')
+alertcondition(upFractal[0], title='Up Fractal Alert', message='Up Fractal Appears')
+alertcondition(dnFractal[0] or upFractal[0], title='General Alert', message='Fractal Appears')
